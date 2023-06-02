@@ -22,7 +22,7 @@ route.post('/signUp', async (req, res) => {
     }
 })
 // check if user exist...login
-route.post('/login', async (req, res) => {
+route.post('/loginUser', async (req, res) => {
     try {
         const email = req.body.email
         const password = req.body.password
@@ -46,6 +46,24 @@ route.get('/profile', auth.user, async (req, res) => {
     }
     catch (e) {
         res.send(e)
+    }
+})
+// login admin
+route.post('/loginAdmin', async (req, res) => {
+    try {
+        const email = req.body.email
+        const password = req.body.password
+        const admin = await User.findOne({ email })
+        if (!admin) { return res.send('email or password is wrong') }
+        else if (admin.role !== 'admin') { return res.send('you not admin') }
+        else {
+            const checkPassword = await bcryptjs.compare(password, admin.password)
+            if (!checkPassword) return res.send('email or password is wrong')
+            const token = admin.gToken()
+            res.send({ admin, token })
+        }
+    } catch (e) {
+        res.send(e.message)
     }
 })
 route.patch('/profile', auth.user, async (req, res) => {
@@ -121,5 +139,13 @@ route.patch('/resetPassword/:token', async (req, res) => {
         res.send(e.message)
     }
 
+})
+route.get('/wishList', auth.user, async (req, res) => {
+    try {
+        const wish = await User.find({ _id: req.user._id }).populate('wishList')
+        res.send(wish)
+    } catch (e) {
+        res.send(e.message)
+    }
 })
 module.exports = route

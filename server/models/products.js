@@ -37,9 +37,11 @@ const productSchema = new mongoose.Schema({
     ratings: [
         {
             star: { type: Number, default: 0 },
+            Comment: { type: String, },
             postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
         }
     ],
+    totalRatings: { type: Number, default: 0 },
     views: {
         type: Number,
         default: 0
@@ -61,6 +63,8 @@ productSchema.methods.toJSON = function () {
         delete product.ratings[i].postedBy.updatedAt
         delete product.ratings[i].postedBy.__v
         delete product.ratings[i].postedBy.Block
+        delete product.ratings[i].postedBy.wishList
+
     }
     delete product.adminId.password
     return product

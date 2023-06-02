@@ -27,6 +27,7 @@ var userSchema = new mongoose.Schema({
             }
         }
     },
+    address: { type: String, required: true },
     password: {
         type: String,
         required: true,
@@ -50,8 +51,10 @@ var userSchema = new mongoose.Schema({
         default: false
     },
     cart: {
-        type: Array
-    }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cart'
+    },
+    wishList: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
 }, { timestamps: true });
 userSchema.pre('save', async function () {
     if (this.isModified('password')) {

@@ -1,5 +1,6 @@
 const express = require('express')
 const Product = require('../models/products')
+const User = require('../models/user')
 const auth = require('../middelwares/auth')
 const route = express.Router()
 const multer = require('multer')
@@ -26,7 +27,10 @@ route.post('/product', auth.user, upload.array('pic', 6), auth.admin, async (req
 // get single product
 route.get('/product/:id', auth.user, auth.admin, async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id)
+        const _id = req.params.id
+        const product = await Product.findByIdAndUpdate(_id, {
+            $inc: { views: 1 }
+        }, { new: true })
         res.send(product)
     } catch (e) {
         res.send(e.message)
@@ -92,14 +96,47 @@ route.get('/products', auth.user, async (req, res) => {
 // user get product and inc views and rating
 route.patch('/rating/:id', auth.user, async (req, res) => {
     try {
+        const idUser = req.user._id
         const _id = req.params.id //product id
+        const user = await Product.findById(_id)
+        const rate = user.ratings.find((userId) => userId.postedBy.toString() === idUser.toString())
+        if (rate) {
+            const product = await Product.findByIdAndUpdate(_id, {
+                $pull: { ratings: { postedBy: req.user._id } }
+            }, { new: true }).populate('ratings.postedBy')
+            product.totalRatings = product.ratings.length
+            return res.send(product)
+        }
         const product = await Product.findByIdAndUpdate(_id, {
-            $inc: { views: 1 },
-            $push: { ratings: [{ star: req.body.star, postedBy: req.user._id }] }
+            $push: { ratings: { star: req.body.star, Comment: req.body.Comment, postedBy: req.user._id, } },
+
         }, { new: true }).populate('ratings.postedBy')
+        product.totalRatings = product.ratings.length
         res.send(product)
 
     } catch (e) {
+        res.send(e.message)
+    }
+})
+// wishList
+route.patch('/wishList/:id', auth.user, async (req, res) => {
+    try {
+        const _id = req.user._id
+        const idPro = req.params.id
+        const findUser = await User.findOne({ _id, wishList: idPro })
+        if (findUser) {
+            const user = await User.findByIdAndUpdate(_id, {
+                $pull: { wishList: idPro }
+            }, { new: true, runValidators: true })
+            return res.send(user)
+        }
+        const user = await User.findByIdAndUpdate(_id, {
+            $push: { wishList: idPro }
+        }, { new: true, runValidators: true })
+
+        res.send(user)
+    }
+    catch (e) {
         res.send(e.message)
     }
 })
