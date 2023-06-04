@@ -1,5 +1,6 @@
 const express = require('express')
 const User = require('../models/user')
+const Order = require('../models/order')
 const auth = require('../middelwares/auth')
 const route = express.Router()
 // get all admins
@@ -20,6 +21,7 @@ route.get('/users', auth.user, auth.admin, async (req, res) => {
         res.send(e.message)
     }
 })
+//get single user
 route.get('/user/:id', auth.user, auth.admin, async (req, res) => {
     try {
         const _id = req.params.id
@@ -30,6 +32,7 @@ route.get('/user/:id', auth.user, auth.admin, async (req, res) => {
         res.send(e.message)
     }
 })
+//delete user
 route.delete('/user/:id', auth.user, auth.admin, async (req, res) => {
     try {
         const _id = req.params.id
@@ -58,5 +61,38 @@ route.patch('/blockUser/:id', auth.user, auth.admin, async (req, res) => {
         res.send(e.message)
     }
 })
-//find single user
+//get all orders
+route.get('/orders', auth.user, auth.admin, async (req, res) => {
+    try {
+        const orders = await Order.find({}).populate('products.product')
+        if (!orders) return res.send('no orders founded')
+        const ordersNumber = orders.length
+        res.send({ orders, ordersNumber })
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+// update status order
+route.patch('/order/:id', auth.user, auth.admin, async (req, res) => {
+    try {
+        const _id = req.params.id // orderId
+        const order = await Order.findById(_id)
+        const status = await Order.findByIdAndUpdate(_id, {
+            orderStatus: req.body.status,
+            PaymentIntent: {
+                id: order.PaymentIntent.id,
+                totalPrice: order.PaymentIntent.totalPrice,
+                createdAt: order.PaymentIntent.createdAt,
+                status: req.body.status,
+                currency: order.PaymentIntent.currency,
+                totalProduct: order.PaymentIntent.totalProduct
+
+            }
+        }, { new: true })
+        if (!status) return res.send(' not updated')
+        res.send(status)
+    } catch (e) {
+        res.send(e.message)
+    }
+})
 module.exports = route
