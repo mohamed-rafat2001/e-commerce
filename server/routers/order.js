@@ -40,4 +40,25 @@ route.get('/order', auth.user, async (req, res) => {
         res.send(e.message)
     }
 })
+// delete order by user
+route.delete('/order/:id', auth.user, async (req, res) => {
+    try {
+        const _id = req.params.id // orderId
+        const order = await Order.findOne({ _id, orderedBy: req.user._id }).deleteOne()
+        if (!order) return res.send('no orders founded')
+        res.send(order)
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+//delete all orders by user
+route.delete('/orders/user', auth.user, async (req, res) => {
+    try {
+        const orders = await Order.find({ orderedBy: req.user._id }).deleteMany()
+        if (!orders) return res.send('no orders founded')
+        res.send({ orders, message: 'all orders deleted' })
+    } catch (e) {
+        res.send(e.message)
+    }
+})
 module.exports = route

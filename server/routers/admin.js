@@ -73,7 +73,7 @@ route.get('/orders', auth.user, auth.admin, async (req, res) => {
     }
 })
 // update status order
-route.patch('/order/:id', auth.user, auth.admin, async (req, res) => {
+route.patch('/order/status/:id', auth.user, auth.admin, async (req, res) => {
     try {
         const _id = req.params.id // orderId
         const order = await Order.findById(_id)
@@ -91,6 +91,16 @@ route.patch('/order/:id', auth.user, auth.admin, async (req, res) => {
         }, { new: true })
         if (!status) return res.send(' not updated')
         res.send(status)
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+// delete all orders
+route.delete('/orders', auth.user, auth.admin, async (req, res) => {
+    try {
+        const orders = await Order.find({}).deleteMany()
+        if (!orders) return res.send('no orders founded')
+        res.send(orders)
     } catch (e) {
         res.send(e.message)
     }
