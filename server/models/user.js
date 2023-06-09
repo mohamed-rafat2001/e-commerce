@@ -8,13 +8,15 @@ var userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: false,
-        trim: true
+        trim: true,
+        minlength: '3'
     },
     lastName: {
         type: String,
         required: true,
         unique: false,
-        trim: true
+        trim: true,
+        minlength: '3'
     },
     email: {
         type: String,

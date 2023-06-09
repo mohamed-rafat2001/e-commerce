@@ -4,6 +4,7 @@ const auth = require('../middelwares/auth')
 const bcryptjs = require('bcryptjs')
 const route = express.Router()
 const nodemailer = require('nodemailer')
+const uniqid = require('uniqid');
 // create new user... signUp
 route.post('/signUp', async (req, res) => {
     try {
@@ -79,7 +80,7 @@ route.patch('/profile', auth.user, async (req, res) => {
 route.delete('/profile', auth.user, async (req, res) => {
     try {
         const user = await User.deleteOne(req.user)
-        res.send('acount success deleted')
+        res.send({ user, message: 'acount success deleted' })
     } catch (e) {
         res.send(e.message)
     }
@@ -89,7 +90,7 @@ route.post('/forgotPassword', async (req, res) => {
     try {
         const email = req.body.email
         const user = await User.findOne({ email })
-        const token = user.passwordToken()
+        const token = uniqid()
         user.passwordResetToken = token
         if (user) {
             let transporter = nodemailer.createTransport({
@@ -106,11 +107,12 @@ route.post('/forgotPassword', async (req, res) => {
             // send mail with defined transport object
 
             let info = await transporter.sendMail({
-                from: '"mohamed 👻" <abc@gmail.com.com>', // sender address
+                from: '"shopping 👻" <abc@gmail.com.com>', // sender address
                 to: user.email, // list of receivers
                 subject: "forgot password", // Subject line
-                text: `hey ${user.firstName + user.lastName}`, // plain text body
-                html: `follow this url to reset password <a href='http://localhost:4000/resetPassword/${token}'>click here</a>`, // html body
+                text: ``, // plain text body
+                html: `Hii ${user.firstName} ${user.lastName} <br>
+                coby this code {  ${token}  } and pasted in code field`, // html body
             });
         }
         else {
@@ -125,15 +127,16 @@ route.post('/forgotPassword', async (req, res) => {
     }
 })
 //reset password
-route.patch('/resetPassword/:token', async (req, res) => {
+route.patch('/resetPassword', async (req, res) => {
     try {
-        const passwordResetToken = req.params.token
-        const user = await User.findOne({ passwordResetToken })
+        const passwordResetToken = req.body.code
+        const user = await User.findOne(passwordResetToken)
         if (!user) return res.send('you not user')
         user.password = req.body.password
         user.passwordResetToken = ""
+        const token = user.gToken()
         await user.save()
-        res.send(user)
+        res.send({ user, token })
     }
     catch (e) {
         res.send(e.message)
@@ -142,8 +145,12 @@ route.patch('/resetPassword/:token', async (req, res) => {
 })
 route.get('/wishList', auth.user, async (req, res) => {
     try {
-        const wish = await User.find({ _id: req.user._id }).populate('wishList')
-        res.send(wish)
+        const wish = await User.findOne({ _id: req.user._id })
+        const list = await wish.populate('wishList')
+        // for (let i = 0; i < wish.length; i++){
+
+        // }
+        res.send(list.wishList)
     } catch (e) {
         res.send(e.message)
     }

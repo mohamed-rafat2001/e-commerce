@@ -1,4 +1,5 @@
 const express = require('express')
+const cors = require('cors')
 const mongoose = require('mongoose')
 const dbconnect = require('./db/mongoose')
 const app = express()
@@ -7,6 +8,7 @@ const port = process.env.PORT
 mongoose.set('strictQuery', true)
 dbconnect()
 app.use(express.json())
+app.use(cors())
 const userRouter = require('./routers/user')
 app.use(userRouter)
 const adminRouter = require('./routers/admin')

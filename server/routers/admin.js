@@ -22,10 +22,21 @@ route.get('/users', auth.user, auth.admin, async (req, res) => {
     }
 })
 //get single user
-route.get('/user/:id', auth.user, auth.admin, async (req, res) => {
+route.get('/user/id', auth.user, auth.admin, async (req, res) => {
     try {
         const _id = req.params.id
         const user = await User.findById(_id)
+        res.send(user)
+    }
+    catch (e) {
+        res.send(e.message)
+    }
+})
+//search about user
+route.get('/user', auth.user, auth.admin, async (req, res) => {
+    try {
+        const search = req.query
+        const user = await User.find(search)
         res.send(user)
     }
     catch (e) {
@@ -65,6 +76,18 @@ route.patch('/blockUser/:id', auth.user, auth.admin, async (req, res) => {
 route.get('/orders', auth.user, auth.admin, async (req, res) => {
     try {
         const orders = await Order.find({}).populate('products.product')
+        if (!orders) return res.send('no orders founded')
+        const ordersNumber = orders.length
+        res.send({ orders, ordersNumber })
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+//search in order by admin
+route.get('/admin/order', auth.user, auth.admin, async (req, res) => {
+    try {
+        search = req.query
+        const orders = await Order.find(search)
         if (!orders) return res.send('no orders founded')
         const ordersNumber = orders.length
         res.send({ orders, ordersNumber })

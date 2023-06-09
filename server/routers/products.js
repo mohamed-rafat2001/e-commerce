@@ -119,7 +119,7 @@ route.patch('/rating/:id', auth.user, async (req, res) => {
     }
 })
 // wishList
-route.patch('/wishList/:id', auth.user, async (req, res) => {
+route.get('/wishList/:id', auth.user, async (req, res) => {
     try {
         const _id = req.user._id
         const idPro = req.params.id
