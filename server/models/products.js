@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true,
+        minlength: '5'
     },
     descrption: {
         type: String,
@@ -17,6 +18,7 @@ const productSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: true,
+        minlength: '20'
     },
     quantity: {
         type: Number,

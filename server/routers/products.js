@@ -17,6 +17,7 @@ route.post('/product', auth.user, upload.array('pic', 6), auth.admin, async (req
     try {
         const product = new Product({ ...req.body, adminId: req.user._id })
         for (let i = 0; i < req.files.length; i++) { product.images[i] = req.files[i].buffer }
+
         const lenImages = product.images.length
         await product.save()
         res.send({ product, lenImages })
@@ -37,10 +38,12 @@ route.get('/product/:id', auth.user, auth.admin, async (req, res) => {
     }
 })
 //update product
-route.patch('/product/:id', auth.user, auth.admin, async (req, res) => {
+route.patch('/product/:id', auth.user, upload.array('pic', 6), auth.admin, async (req, res) => {
     try {
         const _id = req.params.id
-        const product = await Product.findOneAndUpdate({ _id }, req.body, { new: true, runValidators: true })
+        const product = await Product.findByIdAndUpdate({ _id }, req.body, { new: true, runValidators: true })
+        for (let i = 0; i < req.files.length; i++) { product.images[i] = req.files[i].buffer }
+
         res.send(product)
     } catch (e) {
         res.send(e.message)
@@ -56,7 +59,16 @@ route.delete('/product/:id', auth.user, auth.admin, async (req, res) => {
         res.send(e.message)
     }
 })
-//get all product
+//allProduct
+route.get('/allProduct', auth.user, async (req, res) => {
+    try {
+        const product = await Product.find({})
+        res.send(product)
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+//search about product
 route.get('/products', auth.user, async (req, res) => {
     try {
         //filtiring
@@ -93,7 +105,7 @@ route.get('/products', auth.user, async (req, res) => {
         res.send(e.message)
     }
 })
-// user get product and inc views and rating
+// user rating
 route.patch('/rating/:id', auth.user, async (req, res) => {
     try {
         const idUser = req.user._id

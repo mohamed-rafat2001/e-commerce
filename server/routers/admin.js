@@ -22,7 +22,7 @@ route.get('/users', auth.user, auth.admin, async (req, res) => {
     }
 })
 //get single user
-route.get('/user/id', auth.user, auth.admin, async (req, res) => {
+route.get('/user/:id', auth.user, auth.admin, async (req, res) => {
     try {
         const _id = req.params.id
         const user = await User.findById(_id)
