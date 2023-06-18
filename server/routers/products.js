@@ -114,16 +114,18 @@ route.patch('/rating/:id', auth.user, async (req, res) => {
         const rate = user.ratings.find((userId) => userId.postedBy.toString() === idUser.toString())
         if (rate) {
             const product = await Product.findByIdAndUpdate(_id, {
-                $pull: { ratings: { postedBy: req.user._id } }
+                $pull: { ratings: { postedBy: req.user._id } },
+                $inc: { totalRatings: -1 }
             }, { new: true }).populate('ratings.postedBy')
-            product.totalRatings = product.ratings.length
+
+
             return res.send(product)
         }
         const product = await Product.findByIdAndUpdate(_id, {
             $push: { ratings: { star: req.body.star, Comment: req.body.Comment, postedBy: req.user._id, } },
+            $inc: { totalRatings: 1 }
 
         }, { new: true }).populate('ratings.postedBy')
-        product.totalRatings = product.ratings.length
         res.send(product)
 
     } catch (e) {
@@ -131,7 +133,7 @@ route.patch('/rating/:id', auth.user, async (req, res) => {
     }
 })
 // wishList
-route.get('/wishList/:id', auth.user, async (req, res) => {
+route.patch('/toWishList/:id', auth.user, async (req, res) => {
     try {
         const _id = req.user._id
         const idPro = req.params.id
