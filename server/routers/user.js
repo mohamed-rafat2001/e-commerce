@@ -98,8 +98,8 @@ route.post('/forgotPassword', async (req, res) => {
                 port: 587,
                 secure: false, // true for 465, false for other ports
                 auth: {
-                    user: process.env.MAIL_ID, // generated ethereal user
-                    pass: process.env.MP
+                    user: "mohamed20rafat@gmail.com", // generated ethereal user
+                    pass: "zxawybpvxmhlibwr"
                     , // generated ethereal password
                 },
             });

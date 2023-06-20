@@ -64,12 +64,12 @@ userSchema.pre('save', async function () {
     }
 })
 userSchema.methods.gToken = function () {
-    const token = jwt.sign({ id: this._id.toString() }, process.env.KEY)
+    const token = jwt.sign({ id: this._id.toString() }, "secretKey")
     return token
 
 }
 userSchema.methods.passwordToken = function () {
-    const token = jwt.sign({ id: this._id.toString() }, process.env.KEY)
+    const token = jwt.sign({ id: this._id.toString() }, "secretKey")
     return token
 
 

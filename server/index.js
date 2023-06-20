@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const dbconnect = require('./db/mongoose')
 const app = express()
 const env = require('dotenv').config()
-const port = process.env.PORT
+const port = process.env.PORT || 4000
 mongoose.set('strictQuery', true)
 dbconnect()
 app.use(express.json())
