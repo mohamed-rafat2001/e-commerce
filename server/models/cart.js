@@ -9,7 +9,6 @@ var cartSchema = new mongoose.Schema({
         },
         count: Number,
         color: String,
-        price: Number
     }],
     totalPriceCart: Number,
     totalProduct: Number,

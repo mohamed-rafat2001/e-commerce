@@ -7,28 +7,36 @@ const route = express.Router()
 // add catagory
 route.post('/cart', auth.user, async (req, res) => {
     try {
-        const alreadyCartExist = await Cart.find({ orderedBy: req.user._id }).deleteOne()
-        if (alreadyCartExist) alreadyCartExist
-        const cart = new Cart({ ...req.body, orderedBy: req.user._id, })
+        const alreadyCartExist = await Cart.findOne({ orderedBy: req.user._id })
+        const user = await User.findById(req.user._id) //find user
+        if (!alreadyCartExist) {
+            var cart = new Cart({ ...req.body, orderedBy: req.user._id })
+            user.cart = cart._id  // add idCart to user.cart
+            await user.save()
+        }
+        if (alreadyCartExist) {
+            const _id = alreadyCartExist._id
+            var cart = await Cart.findByIdAndUpdate(_id, {
+                $push: { ...req.body },
+                $set: { orderedBy: req.user._id, }
+            }, { new: true })
+        }
+
         totalCar = []
         totalPro = []
-        for (let i = 0; i < req.body.products.length; i++) {
-            const pro = Product.findById(req.body.products[i].product)
+        for (let i = 0; i < cart.products.length; i++) {
+            const pro = Product.findById(cart.products[i].product)
             const pri = await pro.select('price')
-            const count = req.body.products[i].count
-            cart.products[i].price = pri.price
-            totalCar.push(pri.price)
+            const count = cart.products[i].count
+            totalCar.push(pri.price * Number(count))
             totalPro.push(Number(count))
 
         }
-        cart.totalPriceCart = totalCar.reduce((a, b) => a + b, 0);
-        cart.totalProduct = totalPro.reduce((a, b) => a + b, 0);
+        cart.totalProduct = totalPro.reduce((a, b) => a + b, 0)
+        cart.totalPriceCart = totalCar.reduce((a, b) => a + b, 0)
         cart.totalAfterDiscount = cart.totalPriceCart - 50
-
-        const user = await User.findById(req.user._id) //find user
-        user.cart = cart._id  // add idCart to user.cart
-        await user.save()
         await cart.save()
+        await cart.populate('products.product')
         res.send(cart)
     }
     catch (e) {
