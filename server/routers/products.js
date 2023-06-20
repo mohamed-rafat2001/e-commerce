@@ -26,7 +26,7 @@ route.post('/product', auth.user, upload.array('pic', 6), auth.admin, async (req
     }
 })
 // get single product
-route.get('/product/:id', auth.user, auth.admin, async (req, res) => {
+route.get('/product/:id', auth.user, async (req, res) => {
     try {
         const _id = req.params.id
         const product = await Product.findByIdAndUpdate(_id, {
