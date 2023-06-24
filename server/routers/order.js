@@ -1,5 +1,6 @@
 const express = require('express')
 const Order = require('../models/order')
+const User = require('../models/user')
 const Cart = require('../models/cart')
 const uniqid = require('uniqid');
 const auth = require('../middelwares/auth')
@@ -10,6 +11,7 @@ route.post('/order', auth.user, async (req, res) => {
         const COD = req.body.COD
         if (COD !== "Cash On Delivery") return res.send('create cash order failed')
         const cart = await Cart.findOne({ orderedBy: req.user._id })
+        if (!cart) return res.send('no cart founded')
         const order = new Order({
             products: cart.products,
             orderedBy: req.user._id,
@@ -23,6 +25,9 @@ route.post('/order', auth.user, async (req, res) => {
                 totalProduct: cart.totalProduct
             }
         })
+        const update = await User.findByIdAndUpdate({ _id: req.user._id },
+            { $unset: { cart: cart._id } }, { new: true })
+        await cart.remove()
         await order.save()
         res.send(order)
     }
@@ -56,7 +61,7 @@ route.delete('/orders/user', auth.user, async (req, res) => {
     try {
         const orders = await Order.find({ orderedBy: req.user._id }).deleteMany()
         if (!orders) return res.send('no orders founded')
-        res.send({ orders, message: 'all orders deleted' })
+        res.send(orders)
     } catch (e) {
         res.send(e.message)
     }

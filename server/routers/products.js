@@ -60,7 +60,7 @@ route.delete('/product/:id', auth.user, auth.admin, async (req, res) => {
     }
 })
 //allProduct
-route.get('/allProduct', auth.user, async (req, res) => {
+route.get('/allProduct', async (req, res) => {
     try {
         const product = await Product.find({})
         res.send(product)

@@ -46,30 +46,25 @@ route.post('/cart', auth.user, async (req, res) => {
 // get single cart
 route.get('/cart', auth.user, async (req, res) => {
     try {
-        const user = await req.user.populate('cart')
-        res.send(await user.cart.populate('products.product'))
+        const user = await Cart.findOne({ orderedBy: req.user._id })
+        if (!user) { return res.send({ message: 'no product' }) }
+        res.send(await user.populate('products.product'))
     }
     catch (e) {
-        res.send(e.message)
-    }
-})
-// update in cart
-route.patch('/cart', auth.user, async (req, res) => {
-    try {
-        const cart = await Cart.findOne({ orderedBy: req.user._id })
-        const prod = await Cart.findByIdAndUpdate({ _id: cart._id }, req.body, { new: true })
-        if (!prod) return res.send('no cart founded')
-        res.send(prod)
-    } catch (e) {
         res.send(e.message)
     }
 })
 // delete cart
 route.delete('/cart', auth.user, async (req, res) => {
     try {
-        const cart = await Cart.findOneAndDelete({ orderedBy: req.user._id })
-        if (!cart) return res.send('no cart founded')
-        res.send({ cart, message: 'deleted successfully' })
+        const user = await User.findById({ _id: req.user._id })
+        const cart = await Cart.findById({ _id: user.cart })
+        if (cart) {
+            const cartId = await Cart.findOne({ orderedBy: req.user._id }).deleteOne()
+            const update = await User.findByIdAndUpdate({ _id: req.user._id }, { $unset: { cart: cart._id } }, { new: true })
+            return res.send(cartId)
+        }
+        res.send('no product founded')
     } catch (e) {
         res.send(e.message)
     }
@@ -79,10 +74,11 @@ route.delete('/cart/product/:id', auth.user, async (req, res) => {
     try {
         const product = req.params.id // product id
         const cart = await Cart.findOne({ orderedBy: req.user._id }) // cart
-        const proDoc = cart.products.find((el) => el.product.toString() === product) // product document
+        const proDoc = cart.products.find((el) => el.product.toString() === product)// product document
         if (!proDoc) return res.send('no product founded')
-        cart.totalPriceCart = cart.totalPriceCart - Number(proDoc.price)
-        cart.totalProduct = cart.totalProduct - Number(proDoc.count)
+        const search = await Product.findById({ _id: proDoc.product })
+        cart.totalPriceCart = cart.totalPriceCart - search.price * proDoc.count
+        cart.totalProduct = cart.totalProduct - proDoc.count
         cart.totalAfterDiscount = cart.totalPriceCart - 50
         await proDoc.remove()
         await cart.save()

@@ -46,7 +46,7 @@ var userSchema = new mongoose.Schema({
     role: {
         type: String,
         default: 'user',
-        enum: ['user', 'admin']
+        enum: ['admin', 'user']
     },
     Block: {
         type: Boolean,
@@ -64,12 +64,12 @@ userSchema.pre('save', async function () {
     }
 })
 userSchema.methods.gToken = function () {
-    const token = jwt.sign({ id: this._id.toString() }, "secretKey")
+    const token = jwt.sign({ id: this._id.toString() }, process.env.KEY)
     return token
 
 }
 userSchema.methods.passwordToken = function () {
-    const token = jwt.sign({ id: this._id.toString() }, "secretKey")
+    const token = jwt.sign({ id: this._id.toString() }, process.env.KEY)
     return token
 
 

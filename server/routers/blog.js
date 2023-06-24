@@ -12,7 +12,7 @@ const upload = multer({
         cb(null, true)
     }
 })
-route.post('/blog', auth.user, auth.admin, upload.single("image"), async (req, res) => {
+route.post('/blog', auth.user, auth.admin, upload.single("pic"), async (req, res) => {
     try {
         const blog = new Blog(req.body)
         blog.image = req.file.buffer
@@ -23,10 +23,10 @@ route.post('/blog', auth.user, auth.admin, upload.single("image"), async (req, r
     }
 })
 // update blog
-route.patch('/blog/:id', auth.user, auth.admin, async (req, res) => {
+route.patch('/blog/:id', auth.user, auth.admin, upload.single('pic'), async (req, res) => {
     try {
-        const blogId = req.params.id
-        const blog = await Blog.findByIdAndUpdate(blogId, req.body, { new: true, runValidators: true })
+        const _id = req.params.id
+        const blog = await Blog.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true })
         if (!blog) { return res.send('no blog founded') }
         res.send(blog)
     } catch (e) {
@@ -36,8 +36,8 @@ route.patch('/blog/:id', auth.user, auth.admin, async (req, res) => {
 //delete blog
 route.delete('/blog/:id', auth.user, auth.admin, async (req, res) => {
     try {
-        const blogId = req.params.id
-        const blog = await Blog.findByIdAndDelete(blogId)
+        const _id = req.params.id
+        const blog = await Blog.findByIdAndDelete(_id)
         if (!blog) { return res.send('no blog founded') }
         res.send(blog)
     } catch (e) {
@@ -47,7 +47,16 @@ route.delete('/blog/:id', auth.user, auth.admin, async (req, res) => {
 //get all blogs
 route.get('/blogs', auth.user, async (req, res) => {
     try {
-        const blog = await Blog.find()
+        const blog = await Blog.find({})
+        if (!blog) { return res.send('no blogs founded') }
+        res.send(blog)
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+route.delete('/blogs', auth.user, auth.admin, async (req, res) => {
+    try {
+        const blog = await Blog.find({}).deleteMany()
         if (!blog) { return res.send('no blogs founded') }
         res.send(blog)
     } catch (e) {
@@ -57,8 +66,19 @@ route.get('/blogs', auth.user, async (req, res) => {
 //get blog and inc numViews
 route.get('/blog/:id', auth.user, async (req, res) => {
     try {
-        const blogId = req.params.id
-        const blog = await Blog.findByIdAndUpdate(blogId, { $inc: { numViews: 1 } }, { new: true })
+        const _id = req.params.id
+        const blog = await Blog.findByIdAndUpdate(_id, { $inc: { numViews: 1 } }, { new: true })
+            .populate('likes').populate('unLikes')
+        if (!blog) { return res.send('no blogs founded') }
+        res.send(blog)
+    } catch (e) {
+        res.send(e.message)
+    }
+})
+route.get('/admin/blog/:id', auth.user, async (req, res) => {
+    try {
+        const _id = req.params.id
+        const blog = await Blog.findByIdAndUpdate(_id, { new: true })
             .populate('likes').populate('unLikes')
         if (!blog) { return res.send('no blogs founded') }
         res.send(blog)
@@ -121,10 +141,11 @@ route.patch('/unLike/:id', auth.user, async (req, res) => {
         const unLiked = numUnLike.includes(req.user._id.toString())
         if (unLiked == false) {
             const post = await Blog.findByIdAndUpdate(_id, {
+                $pull: { likes: req.user._id },
+                likesNumber: len > 0 ? len - 1 : len,
                 $push: { unLikes: req.user._id },
                 unLikesNumber: lenUnLike + 1,
-                $pull: { likes: req.user._id },
-                likesNumber: len
+
             }, { new: true })
             return res.send(post)
         }
