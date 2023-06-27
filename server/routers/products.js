@@ -69,7 +69,7 @@ route.get('/allProduct', async (req, res) => {
     }
 })
 //search about product
-route.get('/products', auth.user, async (req, res) => {
+route.get('/products', async (req, res) => {
     try {
         //filtiring
         let product = Product.find(req.query)
