@@ -4,12 +4,11 @@ const User = require('../models/user')
 const Cart = require('../models/cart')
 const uniqid = require('uniqid');
 const auth = require('../middelwares/auth')
+const stripe = require('stripe')(process.env.STRIP_KEY)
 const route = express.Router()
 // craete order
 route.post('/order', auth.user, async (req, res) => {
     try {
-        const COD = req.body.COD
-        if (COD !== "Cash On Delivery") return res.send('create cash order failed')
         const cart = await Cart.findOne({ orderedBy: req.user._id })
         if (!cart) return res.send('no cart founded')
         const order = new Order({
@@ -25,11 +24,24 @@ route.post('/order', auth.user, async (req, res) => {
                 totalProduct: cart.totalProduct
             }
         })
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            mode: "payment",
+            line_items: {
+                price_data: {
+                    currency: 'USD',
+                    product_data: cart.products,
+                    unit_amount: cart.totalPriceCart,
+                },
+
+                quantity: cart.totalProduct
+            }
+        })
         const update = await User.findByIdAndUpdate({ _id: req.user._id },
             { $unset: { cart: cart._id } }, { new: true })
         await cart.remove()
         await order.save()
-        res.send(order)
+        res.send(session.url)
     }
     catch (e) {
         res.send(e.message)
